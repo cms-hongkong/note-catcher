@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Note Catcher - Play Only</title>
+    <title>Note Catcher - Records Edition</title>
     <style>
         :root {
             --mint: #B2F2BB; --pink: #FFD6E0; --blue: #A2D2FF; --yellow: #FEF9E7; --text: #5B5B5B;
@@ -21,17 +21,16 @@
             background: rgba(255, 255, 255, 0.4); border-radius: 25px;
             overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 4px solid white;
         }
-        /* Header 簡化：只留 LV, TIME 同 SCORE */
         .header {
             flex: 0 0 60px; background: white;
             display: flex; justify-content: space-around; align-items: center; padding: 5px; z-index: 100;
         }
         .stat-box {
-            background: var(--yellow); padding: 4px 15px; border-radius: 12px; border: 1.5px solid #FAD7A0;
-            text-align: center; min-width: 80px;
+            background: var(--yellow); padding: 4px 10px; border-radius: 12px; border: 1.5px solid #FAD7A0;
+            text-align: center; min-width: 60px;
         }
-        .stat-label { font-size: 0.55rem; color: #888; display: block; }
-        .stat-val { font-size: 1rem; color: #FF85A1; display: block; font-weight: bold; }
+        .stat-label { font-size: 0.5rem; color: #888; display: block; }
+        .stat-val { font-size: 0.9rem; color: #FF85A1; display: block; font-weight: bold; }
 
         #game-area { flex: 1; position: relative; width: 100%; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
@@ -45,7 +44,7 @@
         .key {
             flex: 1; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px;
             position: relative; display: flex; justify-content: center; align-items: flex-end;
-            padding-bottom: 12px; font-weight: bold; font-size: 0.85rem; color: #ccc; cursor: pointer;
+            padding-bottom: 12px; font-weight: bold; font-size: 0.8rem; color: #ccc; cursor: pointer;
         }
         .key.active { background: var(--mint); transform: translateY(2px); }
         .key.black { background: #333; flex: 0.6; height: 60%; margin-left: -3%; margin-right: -3%; z-index: 95; border-radius: 0 0 4px 4px; }
@@ -56,8 +55,15 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;
         }
         .btn-fancy {
-            background: #FF85A1; color: white; padding: 15px 45px; border-radius: 50px; font-size: 1.3rem; border: none; box-shadow: 0 4px 0 #D6336C; cursor: pointer; font-weight: bold;
+            background: #FF85A1; color: white; padding: 12px 40px; border-radius: 50px; font-size: 1.2rem; border: none; box-shadow: 0 4px 0 #D6336C; cursor: pointer; font-weight: bold;
         }
+
+        /* 排行榜樣式 */
+        #leaderboard {
+            width: 85%; max-width: 300px; background: var(--yellow); border-radius: 15px; padding: 10px; margin-top: 20px; border: 2px solid #FAD7A0;
+        }
+        .lb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; border-bottom: 1px dashed #FAD7A0; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -65,18 +71,24 @@
 
     <div id="app-wrapper">
         <div id="start-screen" class="overlay">
-            <h1 style="color: #FF85A1; margin-bottom: 20px; font-size: 3rem;">Note Catcher 🎶</h1>
-            <p style="margin-bottom: 30px; font-size: 1.1rem;">望住五線譜提示，接住跌落嚟嘅音符！</p>
-            <button class="btn-fancy" onclick="startGame()">立即開始</button>
+            <h1 style="color: #FF85A1; margin: 0; font-size: 2.5rem;">Note Catcher</h1>
+            <input type="text" id="playerNameInput" style="padding:10px; border-radius:10px; border:2px solid var(--pink); margin:15px; width: 70%; text-align: center;" placeholder="輸入大名" maxlength="10">
+            <button class="btn-fancy" onclick="startGame()">開始遊戲</button>
+            
+            <div id="leaderboard">
+                <div style="font-weight: bold; color: #FF85A1; margin-bottom: 5px;">🏆 最高分榜</div>
+                <div id="lb-content">正在加載紀錄...</div>
+            </div>
         </div>
 
         <div id="msg-screen" class="overlay hidden">
             <h1 id="msg-title">Level Up!</h1>
-            <p id="msg-body" style="font-size: 1.5rem;"></p>
+            <p id="msg-body" style="font-size: 1.2rem; margin: 10px 0;"></p>
             <button class="btn-fancy" onclick="nextAction()">繼續</button>
         </div>
 
         <div class="header">
+            <div class="stat-box"><span class="stat-label">NAME</span><span id="name-val" class="stat-val">---</span></div>
             <div class="stat-box"><span class="stat-label">LEVEL</span><span id="level-val" class="stat-val">1</span></div>
             <div class="stat-box"><span class="stat-label">TIME</span><span id="timer-val" class="stat-val">60</span></div>
             <div class="stat-box"><span class="stat-label">SCORE</span><span id="score-val" class="stat-val">0</span></div>
@@ -105,12 +117,36 @@
         const charElem = document.getElementById('character');
         
         let score = 0, level = 1, timeLeft = 60, gameActive = false;
-        let timerId, animationId, fallingNote = null;
+        let timerId, animationId, fallingNote = null, playerName = "";
 
         const levelChars = ["🐥", "🐱", "🦄"];
         const s = 26; 
         const noteMap = { "C4": -6, "D4": -5, "E4": -4, "F4": -3, "G4": -2, "A4": -1, "B4": 0, "C5": 1 };
         const notePool = Object.keys(noteMap);
+
+        // 初始化排行榜
+        function updateLB() {
+            const records = JSON.parse(localStorage.getItem('noteCatcher_LB') || "[]");
+            const content = document.getElementById('lb-content');
+            if (records.length === 0) {
+                content.innerHTML = "<div style='color:#ccc; font-size:0.8rem;'>未有紀錄</div>";
+                return;
+            }
+            content.innerHTML = records.slice(0, 5).map((r, i) => `
+                <div class="lb-row">
+                    <span>${i+1}. ${r.name}</span>
+                    <span>${r.score}</span>
+                </div>
+            `).join('');
+        }
+
+        function saveFinalScore() {
+            let records = JSON.parse(localStorage.getItem('noteCatcher_LB') || "[]");
+            records.push({ name: playerName, score: score });
+            records.sort((a, b) => b.score - a.score);
+            localStorage.setItem('noteCatcher_LB', JSON.stringify(records.slice(0, 10)));
+            updateLB();
+        }
 
         function resize() {
             canvas.width = document.getElementById('game-area').offsetWidth;
@@ -134,7 +170,7 @@
             const steps = noteMap[name]; const staffY = centerY - (steps * (s / 2));
             const index = notePool.indexOf(name);
             const startX = 100 + (index * ((canvas.width - 200) / (notePool.length - 1)));
-            fallingNote = { name, x: startX, staffY, currentY: staffY, speed: 1.0 + (level * 0.85), status: 'falling' };
+            fallingNote = { name, x: startX, staffY, currentY: staffY, speed: 0.9 + (level * 0.8), status: 'falling' };
         }
 
         function update() {
@@ -155,6 +191,8 @@
         }
 
         function startGame() {
+            playerName = document.getElementById('playerNameInput').value.trim() || "樂手";
+            document.getElementById('name-val').innerText = playerName;
             document.getElementById('start-screen').classList.add('hidden');
             score = 0; level = 1; startLevel();
         }
@@ -170,10 +208,11 @@
         function endLevel() {
             gameActive = false; clearInterval(timerId);
             document.getElementById('msg-screen').classList.remove('hidden');
-            document.getElementById('msg-body').innerText = `最終得分: ${score}`;
+            document.getElementById('msg-body').innerText = `目前得分: ${score}`;
             if (level >= 3) {
+                saveFinalScore();
                 document.getElementById('msg-title').innerText = "🏆 挑戰完畢！";
-                document.getElementById('msg-btn').innerText = "再玩一次";
+                document.getElementById('msg-btn').innerText = "返回主頁";
             } else {
                 document.getElementById('msg-title').innerText = `Level ${level} 完成!`;
                 document.getElementById('msg-btn').innerText = "下一關";
@@ -185,7 +224,10 @@
             if (level < 3) { level++; startLevel(); } else { location.reload(); }
         }
 
-        function updateUI() { document.getElementById('score-val').innerText = score; document.getElementById('level-val').innerText = level; }
+        function updateUI() { 
+            document.getElementById('score-val').innerText = score; 
+            document.getElementById('level-val').innerText = level; 
+        }
 
         document.getElementById('keyboard').addEventListener('pointerdown', (e) => {
             const key = e.target.closest('.key');
@@ -197,7 +239,8 @@
             } else { score = Math.max(0, score - 5); updateUI(); }
             key.classList.add('active'); setTimeout(() => key.classList.remove('active'), 150);
         });
-        window.onload = resize;
+        
+        window.onload = () => { resize(); updateLB(); };
     </script>
 </body>
 </html>
