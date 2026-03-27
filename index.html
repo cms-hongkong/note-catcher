@@ -3,167 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Note Catcher</title>
+    <title>Note Catcher - Piano Master</title>
     <style>
         :root {
-            --bg-color: #f0f8ff;
-            --staff-line: #333;
-            --key-white: #fff;
-            --key-black: #222;
-            --active-color: #ffeb3b;
-            --primary-red: #ff4d4d;
+            --mint: #B2F2BB;
+            --pink: #FFD6E0;
+            --blue: #A2D2FF;
+            --yellow: #FEF9E7;
+            --text: #5B5B5B;
         }
 
         body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(180deg, #E3F2FD 0%, #F3E5F5 100%);
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            touch-action: manipulation;
+            color: var(--text);
         }
 
-        /* Game Header */
-        #game-header {
-            background: #2c3e50;
-            color: white;
-            padding: 10px 15px;
+        /* Header 區域 */
+        .header {
+            padding: 10px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            justify-content: space-around;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            z-index: 10;
         }
 
-        .stat-box { text-align: center; }
-        .stat-val { font-weight: bold; font-size: 20px; color: #f1c40f; display: block; }
+        .stat-box {
+            background: var(--yellow);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            border: 2px solid #FAD7A0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
 
-        /* Stage Area */
-        #game-stage {
+        .stat-val { display: block; color: #FF85A1; font-size: 1.1rem; }
+
+        /* 遊戲畫布區域 */
+        #game-area {
             flex: 1;
             position: relative;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
-            overflow: hidden;
-        }
-
-        /* Staff Lines */
-        #staff-container {
-            position: absolute;
-            top: 25%;
-            width: 100%;
-            height: 120px;
-        }
-
-        .staff-line {
-            height: 2px;
-            background-color: var(--staff-line);
-            width: 100%;
-            position: absolute;
-        }
-
-        /* Character */
-        #character {
-            position: absolute;
-            bottom: 20px;
-            width: 70px;
-            height: 70px;
-            font-size: 60px;
+            background: rgba(255,255,255,0.4);
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 10;
-            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
         }
 
-        /* Note bubble */
-        .note-bubble {
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #character {
             position: absolute;
-            width: 32px;
-            height: 24px;
-            background: black;
-            border-radius: 50%;
-            transform: rotate(-20deg);
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            bottom: 20px;
+            font-size: 50px;
+            transition: left 0.2s ease-out;
+            pointer-events: none;
+            z-index: 5;
         }
 
-        /* Keyboard */
+        /* 鋼琴區域 */
         #keyboard {
-            height: 220px;
+            height: 200px;
             display: flex;
-            background: #000;
+            background: #333;
             padding: 0 2px 5px 2px;
             position: relative;
         }
 
         .key {
             flex: 1;
-            background: var(--key-white);
+            background: white;
             border: 1px solid #ddd;
-            border-radius: 0 0 8px 8px;
+            border-radius: 0 0 5px 5px;
             position: relative;
-            cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
             font-weight: bold;
-            color: #999;
-            z-index: 1;
-            transition: background 0.1s;
+            color: #ccc;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .key.active { background-color: var(--active-color); transform: translateY(2px); }
+        .key.active { background: var(--mint); transform: translateY(2px); }
 
         .key.black {
-            background: var(--key-black);
+            background: #222;
             flex: 0.6;
             height: 60%;
-            margin-left: -4%;
-            margin-right: -4%;
+            margin-left: -3%;
+            margin-right: -3%;
             z-index: 2;
-            border-radius: 0 0 4px 4px;
+            border-radius: 0 0 3px 3px;
         }
 
-        /* Overlays */
+        /* 彈出視窗 */
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            color: white;
+            background: rgba(255,255,255,0.95);
+            z-index: 100;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 100;
-            padding: 20px;
             text-align: center;
         }
 
-        input[type="text"] {
-            padding: 12px;
-            font-size: 18px;
-            border-radius: 8px;
-            border: none;
-            margin: 20px 0;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        button {
-            padding: 15px 40px;
-            font-size: 20px;
-            background: #27ae60;
+        .btn-fancy {
+            background: #FF85A1;
             color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
             border: none;
-            border-radius: 30px;
+            box-shadow: 0 5px 0 #D6336C;
             cursor: pointer;
-            box-shadow: 0 4px 0 #1e8449;
+            margin-top: 20px;
         }
 
-        button:active { transform: translateY(3px); box-shadow: none; }
+        input {
+            padding: 10px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            border: 2px solid var(--pink);
+            text-align: center;
+        }
 
         .hidden { display: none !important; }
     </style>
@@ -171,28 +147,28 @@
 <body>
 
     <div id="start-screen" class="overlay">
-        <h1>Note Catcher</h1>
-        <p>請輸入你的名字開始挑戰：</p>
-        <input type="text" id="player-name-input" placeholder="Your Name" maxlength="10">
-        <button onclick="startGame()">START GAME</button>
+        <h1 style="color: #FF85A1;">Note Catcher 🍭</h1>
+        <p>請輸入大名以記錄分數：</p>
+        <input type="text" id="playerName" placeholder="Your Name" maxlength="10">
+        <button class="btn-fancy" onclick="initGame()">開始遊戲</button>
     </div>
 
     <div id="msg-screen" class="overlay hidden">
         <h1 id="msg-title">Level Complete!</h1>
-        <p id="msg-body">Your Score: 0</p>
-        <button id="msg-btn" onclick="handleMessageBtn()">NEXT LEVEL</button>
+        <p id="msg-body"></p>
+        <button class="btn-fancy" id="msg-btn" onclick="handleNextLevel()">NEXT</button>
     </div>
 
-    <div id="game-header">
-        <div class="stat-box">NAME<span id="player-display" class="stat-val">---</span></div>
-        <div class="stat-box">LEVEL<span id="level-display" class="stat-val">1</span></div>
-        <div class="stat-box">TIME<span id="timer-display" class="stat-val">60</span></div>
-        <div class="stat-box">SCORE<span id="score-display" class="stat-val">0</span></div>
+    <div class="header">
+        <div class="stat-box">NAME<span id="name-val" class="stat-val">---</span></div>
+        <div class="stat-box">LEVEL<span id="level-val" class="stat-val">1</span></div>
+        <div class="stat-box">TIME<span id="timer-val" class="stat-val">60</span></div>
+        <div class="stat-box">SCORE<span id="score-val" class="stat-val">0</span></div>
     </div>
 
-    <div id="game-stage">
-        <div id="staff-container"></div>
-        <div id="character">👹</div>
+    <div id="game-area">
+        <canvas id="staffCanvas"></canvas>
+        <div id="character">👾</div>
     </div>
 
     <div id="keyboard">
@@ -212,136 +188,171 @@
     </div>
 
     <script>
-        let playerName = "";
+        const canvas = document.getElementById('staffCanvas');
+        const ctx = canvas.getContext('2d');
+        const character = document.getElementById('character');
+        
         let score = 0;
         let level = 1;
         let timeLeft = 60;
-        let timerObj;
-        let currentNote = "";
-        const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
-        const notePositions = {"C5": 0, "B4": 10, "A4": 20, "G4": 30, "F4": 40, "E4": 50, "D4": 60, "C4": 70};
+        let gameActive = false;
+        let timerId;
+        let targetNote = "";
+        
+        const s = 24; // 行距
+        // 精確的音位對齊 (以第三線為中心 0)
+        const noteMap = {
+            "C4": -6, "D4": -5, "E4": -4, "F4": -3, "G4": -2, "A4": -1, "B4": 0, "C5": 1
+        };
+        const notePool = Object.keys(noteMap);
 
-        const staffContainer = document.getElementById('staff-container');
-        const character = document.getElementById('character');
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = document.getElementById('game-area').offsetHeight;
+            drawEverything();
+        }
 
-        // 初始化五線譜
-        function initStaff() {
-            staffContainer.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const line = document.createElement('div');
-                line.className = 'staff-line';
-                line.style.top = (i * 20) + 'px';
-                staffContainer.appendChild(line);
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawStaff() {
+            const centerY = canvas.height / 2;
+            ctx.strokeStyle = "#5B5B5B";
+            ctx.lineWidth = 2;
+
+            // 畫五條線
+            for (let i = -2; i <= 2; i++) {
+                let y = centerY + (i * s);
+                ctx.beginPath();
+                ctx.moveTo(20, y);
+                ctx.lineTo(canvas.width - 20, y);
+                ctx.stroke();
+            }
+
+            // 畫高音譜號 (根據你提供的數值修正)
+            ctx.save();
+            ctx.fillStyle = "#5B5B5B";
+            ctx.font = `${s * 4.5}px Arial`;
+            ctx.textBaseline = "middle";
+            ctx.translate(40, centerY + s * 0.1); 
+            ctx.fillText("𝄞", 0, 0);
+            ctx.restore();
+        }
+
+        function drawNote() {
+            if (!targetNote) return;
+            const centerY = canvas.height / 2;
+            const steps = noteMap[targetNote];
+            const y = centerY - (steps * (s / 2));
+            const x = canvas.width / 2;
+
+            // 畫音符頭
+            ctx.fillStyle = "#5B5B5B";
+            ctx.beginPath();
+            ctx.ellipse(x, y, s * 0.45, s * 0.35, -Math.PI / 8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 如果是 C4 (Middle C)，畫下加線
+            if (targetNote === "C4") {
+                ctx.strokeStyle = "#5B5B5B";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x - 20, y);
+                ctx.lineTo(x + 20, y);
+                ctx.stroke();
             }
         }
 
-        function startGame() {
-            const input = document.getElementById('player-name-input');
-            playerName = input.value.trim() || "Player 1";
-            document.getElementById('player-display').innerText = playerName;
-            document.getElementById('start-screen').classList.add('hidden');
-            resetGame();
+        function drawEverything() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStaff();
+            drawNote();
         }
 
-        function resetGame() {
+        function initGame() {
+            const name = document.getElementById('playerName').value || "Musician";
+            document.getElementById('name-val').innerText = name;
+            document.getElementById('start-screen').classList.add('hidden');
             score = 0;
             level = 1;
             startLevel();
         }
 
         function startLevel() {
-            timeLeft = 60 - ((level - 1) * 10);
-            updateUI();
-            initStaff();
-            spawnNote();
+            timeLeft = 60 - (level - 1) * 10;
+            gameActive = true;
+            nextNote();
             
-            clearInterval(timerObj);
-            timerObj = setInterval(() => {
+            if (timerId) clearInterval(timerId);
+            timerId = setInterval(() => {
                 timeLeft--;
-                updateUI();
-                if (timeLeft <= 0) {
-                    endLevel();
-                }
+                document.getElementById('timer-val').innerText = timeLeft;
+                if (timeLeft <= 0) endLevel();
             }, 1000);
+            
+            updateUI();
+            resizeCanvas();
+        }
+
+        function nextNote() {
+            targetNote = notePool[Math.floor(Math.random() * notePool.length)];
+            drawEverything();
         }
 
         function updateUI() {
-            document.getElementById('score-display').innerText = score;
-            document.getElementById('level-display').innerText = level;
-            document.getElementById('timer-display').innerText = timeLeft;
-        }
-
-        function spawnNote() {
-            const oldNote = document.querySelector('.note-bubble');
-            if (oldNote) oldNote.remove();
-
-            currentNote = notes[Math.floor(Math.random() * notes.length)];
-            const noteEl = document.createElement('div');
-            noteEl.className = 'note-bubble';
-            noteEl.style.left = '50%';
-            noteEl.style.top = notePositions[currentNote] + 'px';
-            
-            if (currentNote === "C4") {
-                const line = document.createElement('div');
-                line.style.cssText = "width:40px; height:2px; background:black; position:absolute; top:11px; left:-4px;";
-                noteEl.appendChild(line);
-            }
-            staffContainer.appendChild(noteEl);
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('level-val').innerText = level;
         }
 
         function endLevel() {
-            clearInterval(timerObj);
+            gameActive = false;
+            clearInterval(timerId);
             const msgScreen = document.getElementById('msg-screen');
-            const msgTitle = document.getElementById('msg-title');
-            const msgBody = document.getElementById('msg-body');
-            const msgBtn = document.getElementById('msg-btn');
-
             msgScreen.classList.remove('hidden');
-
-            if (level < 3) {
-                msgTitle.innerText = "Level " + level + " 完成!";
-                msgBody.innerText = playerName + " 目前得分: " + score;
-                msgBtn.innerText = "進入 Level " + (level + 1);
+            document.getElementById('msg-body').innerText = `你的得分: ${score}`;
+            
+            if (level >= 3) {
+                document.getElementById('msg-title').innerText = "🎉 挑戰完成！";
+                document.getElementById('msg-btn').innerText = "再玩一次";
             } else {
-                msgTitle.innerText = "🎉 最終紀錄 🎉";
-                msgBody.innerText = playerName + " 總分: " + score + "\n太勁喇！";
-                msgBtn.innerText = "再玩一次";
+                document.getElementById('msg-title').innerText = `Level ${level} 完成！`;
+                document.getElementById('msg-btn').innerText = "進入下一關";
             }
         }
 
-        function handleMessageBtn() {
+        function handleNextLevel() {
             document.getElementById('msg-screen').classList.add('hidden');
             if (level < 3) {
                 level++;
                 startLevel();
             } else {
-                level = 1;
-                score = 0;
-                startLevel();
+                initGame();
             }
         }
 
+        // 鋼琴點擊事件
         document.getElementById('keyboard').addEventListener('pointerdown', (e) => {
             const key = e.target.closest('.key');
-            if (!key || timeLeft <= 0) return;
+            if (!key || !gameActive) return;
 
             const selected = key.dataset.note;
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 150);
 
-            if (selected === currentNote) {
+            if (selected === targetNote) {
                 score += 10;
-                const rect = key.getBoundingClientRect();
-                character.style.left = (rect.left + rect.width/2 - 35) + 'px';
+                // 角色移動到對應位置
+                const keyRect = key.getBoundingClientRect();
+                character.style.left = (keyRect.left + keyRect.width/2 - 25) + "px";
                 updateUI();
-                spawnNote();
+                nextNote();
             } else {
                 score = Math.max(0, score - 5);
                 updateUI();
             }
         });
 
-        initStaff();
+        // 初始化畫布
+        resizeCanvas();
     </script>
 </body>
 </html>
