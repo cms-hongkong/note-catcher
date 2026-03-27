@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Note Catcher</title>
+    <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --staff-line: #333;
+            --key-white: #fff;
+            --key-black: #222;
+            --active-color: #ffeb3b;
+            --primary-red: #ff4d4d;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Game Header */
+        #game-header {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .stat-box { text-align: center; }
+        .stat-val { font-weight: bold; font-size: 20px; color: #f1c40f; display: block; }
+
+        /* Stage Area */
+        #game-stage {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            overflow: hidden;
+        }
+
+        /* Staff Lines */
+        #staff-container {
+            position: absolute;
+            top: 25%;
+            width: 100%;
+            height: 120px;
+        }
+
+        .staff-line {
+            height: 2px;
+            background-color: var(--staff-line);
+            width: 100%;
+            position: absolute;
+        }
+
+        /* Character */
+        #character {
+            position: absolute;
+            bottom: 20px;
+            width: 70px;
+            height: 70px;
+            font-size: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+        }
+
+        /* Note bubble */
+        .note-bubble {
+            position: absolute;
+            width: 32px;
+            height: 24px;
+            background: black;
+            border-radius: 50%;
+            transform: rotate(-20deg);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Keyboard */
+        #keyboard {
+            height: 220px;
+            display: flex;
+            background: #000;
+            padding: 0 2px 5px 2px;
+            position: relative;
+        }
+
+        .key {
+            flex: 1;
+            background: var(--key-white);
+            border: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 15px;
+            font-weight: bold;
+            color: #999;
+            z-index: 1;
+            transition: background 0.1s;
+        }
+
+        .key.active { background-color: var(--active-color); transform: translateY(2px); }
+
+        .key.black {
+            background: var(--key-black);
+            flex: 0.6;
+            height: 60%;
+            margin-left: -4%;
+            margin-right: -4%;
+            z-index: 2;
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* Overlays */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: none;
+            margin: 20px 0;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1e8449;
+        }
+
+        button:active { transform: translateY(3px); box-shadow: none; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="overlay">
+        <h1>Note Catcher</h1>
+        <p>請輸入你的名字開始挑戰：</p>
+        <input type="text" id="player-name-input" placeholder="Your Name" maxlength="10">
+        <button onclick="startGame()">START GAME</button>
+    </div>
+
+    <div id="msg-screen" class="overlay hidden">
+        <h1 id="msg-title">Level Complete!</h1>
+        <p id="msg-body">Your Score: 0</p>
+        <button id="msg-btn" onclick="handleMessageBtn()">NEXT LEVEL</button>
+    </div>
+
+    <div id="game-header">
+        <div class="stat-box">NAME<span id="player-display" class="stat-val">---</span></div>
+        <div class="stat-box">LEVEL<span id="level-display" class="stat-val">1</span></div>
+        <div class="stat-box">TIME<span id="timer-display" class="stat-val">60</span></div>
+        <div class="stat-box">SCORE<span id="score-display" class="stat-val">0</span></div>
+    </div>
+
+    <div id="game-stage">
+        <div id="staff-container"></div>
+        <div id="character">👹</div>
+    </div>
+
+    <div id="keyboard">
+        <div class="key" data-note="C4">C</div>
+        <div class="key black" data-note="C#4"></div>
+        <div class="key" data-note="D4">D</div>
+        <div class="key black" data-note="D#4"></div>
+        <div class="key" data-note="E4">E</div>
+        <div class="key" data-note="F4">F</div>
+        <div class="key black" data-note="F#4"></div>
+        <div class="key" data-note="G4">G</div>
+        <div class="key black" data-note="G#4"></div>
+        <div class="key" data-note="A4">A</div>
+        <div class="key black" data-note="A#4"></div>
+        <div class="key" data-note="B4">B</div>
+        <div class="key" data-note="C5">C5</div>
+    </div>
+
+    <script>
+        let playerName = "";
+        let score = 0;
+        let level = 1;
+        let timeLeft = 60;
+        let timerObj;
+        let currentNote = "";
+        const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+        const notePositions = {"C5": 0, "B4": 10, "A4": 20, "G4": 30, "F4": 40, "E4": 50, "D4": 60, "C4": 70};
+
+        const staffContainer = document.getElementById('staff-container');
+        const character = document.getElementById('character');
+
+        // 初始化五線譜
+        function initStaff() {
+            staffContainer.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const line = document.createElement('div');
+                line.className = 'staff-line';
+                line.style.top = (i * 20) + 'px';
+                staffContainer.appendChild(line);
+            }
+        }
+
+        function startGame() {
+            const input = document.getElementById('player-name-input');
+            playerName = input.value.trim() || "Player 1";
+            document.getElementById('player-display').innerText = playerName;
+            document.getElementById('start-screen').classList.add('hidden');
+            resetGame();
+        }
+
+        function resetGame() {
+            score = 0;
+            level = 1;
+            startLevel();
+        }
+
+        function startLevel() {
+            timeLeft = 60 - ((level - 1) * 10);
+            updateUI();
+            initStaff();
+            spawnNote();
+            
+            clearInterval(timerObj);
+            timerObj = setInterval(() => {
+                timeLeft--;
+                updateUI();
+                if (timeLeft <= 0) {
+                    endLevel();
+                }
+            }, 1000);
+        }
+
+        function updateUI() {
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('level-display').innerText = level;
+            document.getElementById('timer-display').innerText = timeLeft;
+        }
+
+        function spawnNote() {
+            const oldNote = document.querySelector('.note-bubble');
+            if (oldNote) oldNote.remove();
+
+            currentNote = notes[Math.floor(Math.random() * notes.length)];
+            const noteEl = document.createElement('div');
+            noteEl.className = 'note-bubble';
+            noteEl.style.left = '50%';
+            noteEl.style.top = notePositions[currentNote] + 'px';
+            
+            if (currentNote === "C4") {
+                const line = document.createElement('div');
+                line.style.cssText = "width:40px; height:2px; background:black; position:absolute; top:11px; left:-4px;";
+                noteEl.appendChild(line);
+            }
+            staffContainer.appendChild(noteEl);
+        }
+
+        function endLevel() {
+            clearInterval(timerObj);
+            const msgScreen = document.getElementById('msg-screen');
+            const msgTitle = document.getElementById('msg-title');
+            const msgBody = document.getElementById('msg-body');
+            const msgBtn = document.getElementById('msg-btn');
+
+            msgScreen.classList.remove('hidden');
+
+            if (level < 3) {
+                msgTitle.innerText = "Level " + level + " 完成!";
+                msgBody.innerText = playerName + " 目前得分: " + score;
+                msgBtn.innerText = "進入 Level " + (level + 1);
+            } else {
+                msgTitle.innerText = "🎉 最終紀錄 🎉";
+                msgBody.innerText = playerName + " 總分: " + score + "\n太勁喇！";
+                msgBtn.innerText = "再玩一次";
+            }
+        }
+
+        function handleMessageBtn() {
+            document.getElementById('msg-screen').classList.add('hidden');
+            if (level < 3) {
+                level++;
+                startLevel();
+            } else {
+                level = 1;
+                score = 0;
+                startLevel();
+            }
+        }
+
+        document.getElementById('keyboard').addEventListener('pointerdown', (e) => {
+            const key = e.target.closest('.key');
+            if (!key || timeLeft <= 0) return;
+
+            const selected = key.dataset.note;
+            key.classList.add('active');
+            setTimeout(() => key.classList.remove('active'), 150);
+
+            if (selected === currentNote) {
+                score += 10;
+                const rect = key.getBoundingClientRect();
+                character.style.left = (rect.left + rect.width/2 - 35) + 'px';
+                updateUI();
+                spawnNote();
+            } else {
+                score = Math.max(0, score - 5);
+                updateUI();
+            }
+        });
+
+        initStaff();
+    </script>
+</body>
+</html>
