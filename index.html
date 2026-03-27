@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Note Catcher - Records Edition</title>
+    <title>Note Catcher - Extreme Challenge</title>
     <style>
         :root {
             --mint: #B2F2BB; --pink: #FFD6E0; --blue: #A2D2FF; --yellow: #FEF9E7; --text: #5B5B5B;
@@ -57,13 +57,10 @@
         .btn-fancy {
             background: #FF85A1; color: white; padding: 12px 40px; border-radius: 50px; font-size: 1.2rem; border: none; box-shadow: 0 4px 0 #D6336C; cursor: pointer; font-weight: bold;
         }
-
-        /* 排行榜樣式 */
         #leaderboard {
             width: 85%; max-width: 300px; background: var(--yellow); border-radius: 15px; padding: 10px; margin-top: 20px; border: 2px solid #FAD7A0;
         }
         .lb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; border-bottom: 1px dashed #FAD7A0; }
-        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -73,11 +70,10 @@
         <div id="start-screen" class="overlay">
             <h1 style="color: #FF85A1; margin: 0; font-size: 2.5rem;">Note Catcher</h1>
             <input type="text" id="playerNameInput" style="padding:10px; border-radius:10px; border:2px solid var(--pink); margin:15px; width: 70%; text-align: center;" placeholder="輸入大名" maxlength="10">
-            <button class="btn-fancy" onclick="startGame()">開始遊戲</button>
-            
+            <button class="btn-fancy" onclick="startGame()">開始挑戰 🎶</button>
             <div id="leaderboard">
                 <div style="font-weight: bold; color: #FF85A1; margin-bottom: 5px;">🏆 最高分榜</div>
-                <div id="lb-content">正在加載紀錄...</div>
+                <div id="lb-content">正在加載...</div>
             </div>
         </div>
 
@@ -124,7 +120,6 @@
         const noteMap = { "C4": -6, "D4": -5, "E4": -4, "F4": -3, "G4": -2, "A4": -1, "B4": 0, "C5": 1 };
         const notePool = Object.keys(noteMap);
 
-        // 初始化排行榜
         function updateLB() {
             const records = JSON.parse(localStorage.getItem('noteCatcher_LB') || "[]");
             const content = document.getElementById('lb-content');
@@ -133,10 +128,7 @@
                 return;
             }
             content.innerHTML = records.slice(0, 5).map((r, i) => `
-                <div class="lb-row">
-                    <span>${i+1}. ${r.name}</span>
-                    <span>${r.score}</span>
-                </div>
+                <div class="lb-row"><span>${i+1}. ${r.name}</span><span>${r.score}</span></div>
             `).join('');
         }
 
@@ -160,8 +152,9 @@
             for (let i = -2; i <= 2; i++) {
                 let y = centerY + (i * s); ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(canvas.width - 20, y); ctx.stroke();
             }
+            // 高音譜號：由 -18px 改為 -16px (相對移低 2px)
             ctx.save(); ctx.fillStyle = "#333"; ctx.font = `${s * 9}px Arial`; ctx.textBaseline = "middle";
-            ctx.fillText("𝄞", 25, centerY + (s * 0.2) - 18); ctx.restore();
+            ctx.fillText("𝄞", 25, centerY + (s * 0.2) - 16); ctx.restore();
         }
 
         function createNote() {
@@ -170,7 +163,7 @@
             const steps = noteMap[name]; const staffY = centerY - (steps * (s / 2));
             const index = notePool.indexOf(name);
             const startX = 100 + (index * ((canvas.width - 200) / (notePool.length - 1)));
-            fallingNote = { name, x: startX, staffY, currentY: staffY, speed: 0.9 + (level * 0.8), status: 'falling' };
+            fallingNote = { name, x: startX, staffY, currentY: staffY, speed: 0.9 + (level * 1.1), status: 'falling' };
         }
 
         function update() {
@@ -198,7 +191,9 @@
         }
 
         function startLevel() {
-            timeLeft = 60 - (level - 1) * 10; charElem.innerText = levelChars[level - 1];
+            // 每關減少 20 秒 (L1: 60, L2: 40, L3: 20)
+            timeLeft = 60 - (level - 1) * 20; 
+            charElem.innerText = levelChars[level - 1];
             updateUI(); resize(); createNote(); gameActive = true;
             if (timerId) clearInterval(timerId);
             timerId = setInterval(() => { timeLeft--; document.getElementById('timer-val').innerText = timeLeft; if (timeLeft <= 0) endLevel(); }, 1000);
@@ -208,14 +203,14 @@
         function endLevel() {
             gameActive = false; clearInterval(timerId);
             document.getElementById('msg-screen').classList.remove('hidden');
-            document.getElementById('msg-body').innerText = `目前得分: ${score}`;
+            document.getElementById('msg-body').innerText = `得分: ${score}`;
             if (level >= 3) {
                 saveFinalScore();
-                document.getElementById('msg-title').innerText = "🏆 挑戰完畢！";
+                document.getElementById('msg-title').innerText = "🏆 最終得分";
                 document.getElementById('msg-btn').innerText = "返回主頁";
             } else {
                 document.getElementById('msg-title').innerText = `Level ${level} 完成!`;
-                document.getElementById('msg-btn').innerText = "下一關";
+                document.getElementById('msg-btn').innerText = "挑戰下一關";
             }
         }
 
@@ -224,10 +219,7 @@
             if (level < 3) { level++; startLevel(); } else { location.reload(); }
         }
 
-        function updateUI() { 
-            document.getElementById('score-val').innerText = score; 
-            document.getElementById('level-val').innerText = level; 
-        }
+        function updateUI() { document.getElementById('score-val').innerText = score; document.getElementById('level-val').innerText = level; }
 
         document.getElementById('keyboard').addEventListener('pointerdown', (e) => {
             const key = e.target.closest('.key');
@@ -239,7 +231,6 @@
             } else { score = Math.max(0, score - 5); updateUI(); }
             key.classList.add('active'); setTimeout(() => key.classList.remove('active'), 150);
         });
-        
         window.onload = () => { resize(); updateLB(); };
     </script>
 </body>
