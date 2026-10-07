@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Note Catcher - Extreme Challenge</title>
+    <title>Note Catcher - 五線譜讀譜挑戰</title>
     <style>
         :root {
             --mint: #B2F2BB; --pink: #FFD6E0; --blue: #A2D2FF; --yellow: #FEF9E7; --text: #5B5B5B;
@@ -38,7 +38,7 @@
         #character {
             position: absolute; bottom: 10px; width: 60px; height: 60px; font-size: 45px;
             display: flex; justify-content: center; align-items: center;
-            transition: left 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.1s ease;
+            transition: left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.1s ease;
             z-index: 50; transform-origin: center bottom; pointer-events: none;
         }
         #character.bounce { transform: scale(1.25) translateY(-8px); }
@@ -51,7 +51,7 @@
             flex: 1; background: white; border: 1px solid #ccc; border-radius: 0 0 8px 8px;
             position: relative; display: flex; justify-content: center; align-items: flex-end;
             padding-bottom: 12px; font-weight: bold; font-size: 0.9rem; color: #555; cursor: pointer;
-            box-shadow: inset 0 -5px 0 #e0e0e0; transition: background 0.1s, transform 0.05s;
+            box-shadow: inset 0 -5px 0 #e0e0e0; transition: background 0.1s, transform 0.05s, color 0.3s;
         }
         .key.active { background: var(--mint); transform: translateY(3px); box-shadow: inset 0 -2px 0 #8ce99a; }
         .key.black {
@@ -83,7 +83,7 @@
     <div id="app-wrapper">
         <div id="start-screen" class="overlay">
             <h1 style="color: #FF85A1; margin: 0; font-size: 2.5rem; text-shadow: 2px 2px 0 #FFD6E0;">Note Catcher</h1>
-            <p style="color: #666; font-size: 0.95rem; margin: 8px 0 15px 0;">聽音辨譜極限挑戰 🎵</p>
+            <p style="color: #666; font-size: 0.95rem; margin: 8px 0 15px 0;">看五線譜認音高 🎶（位置已隨機化）</p>
             <input type="text" id="playerNameInput" style="padding:10px; border-radius:12px; border:2px solid var(--pink); margin-bottom:15px; width: 75%; text-align: center; font-size: 1rem; outline: none;" placeholder="輸入大名" maxlength="10">
             <button class="btn-fancy" onclick="startGame()">開始挑戰 🎶</button>
             <div id="leaderboard">
@@ -138,7 +138,6 @@
         const noteMap = { "C4": -6, "D4": -5, "E4": -4, "F4": -3, "G4": -2, "A4": -1, "B4": 0, "C5": 1 };
         const notePool = Object.keys(noteMap);
 
-        // 音頻合成 (Web Audio API)
         const noteFreqs = {
             "C4": 261.63, "D4": 293.66, "E4": 329.63, "F4": 349.23,
             "G4": 392.00, "A4": 440.00, "B4": 493.88, "C5": 523.25
@@ -169,7 +168,6 @@
             osc.stop(audioCtx.currentTime + 0.5);
         }
 
-        // 浮動打擊特效
         let floatingTexts = [];
         function addFloatingText(text, x, y, color) {
             floatingTexts.push({ text, x, y, color, alpha: 1, life: 30 });
@@ -212,7 +210,7 @@
             ctx.strokeStyle = "#5B5B5B"; 
             ctx.lineWidth = 1.5;
 
-            // 五線譜 5 條線
+            // 畫五線譜五條線
             for (let i = -2; i <= 2; i++) {
                 let y = centerY + (i * s);
                 ctx.beginPath();
@@ -221,7 +219,7 @@
                 ctx.stroke();
             }
 
-            // 高音譜號
+            // 畫高音譜號
             ctx.save();
             ctx.fillStyle = "#333";
             ctx.font = `${s * 8.5}px Arial`;
@@ -239,10 +237,13 @@
             const centerY = viewHeight * 0.24;
             const steps = noteMap[name];
             const staffY = centerY - (steps * (s / 2));
-            const index = notePool.indexOf(name);
-            const startX = 100 + (index * ((viewWidth - 200) / (notePool.length - 1)));
             
-            const baseSpeed = 1.2 + (level * 1.0);
+            // X 軸改為隨機位置 (25% ~ 75% 螢幕寬度)，打破軌道記憶
+            const minX = viewWidth * 0.25;
+            const maxX = viewWidth * 0.75;
+            const startX = Math.floor(Math.random() * (maxX - minX)) + minX;
+
+            const baseSpeed = 1.0 + (level * 0.8);
             fallingNote = { name, x: startX, staffY, currentY: staffY, speed: baseSpeed, status: 'falling' };
         }
 
@@ -253,12 +254,13 @@
             drawStaff();
 
             if (fallingNote) {
-                // 目標陰影音符
+                // 1. 五線譜原位半透明提示（方便看清線與間）
                 ctx.save();
-                ctx.globalAlpha = 0.25;
+                ctx.globalAlpha = 0.3;
                 drawNoteHead(fallingNote.x, fallingNote.staffY, fallingNote.name);
                 ctx.restore();
 
+                // 2. 音符下落
                 if (fallingNote.status === 'falling') {
                     fallingNote.currentY += fallingNote.speed;
                 }
@@ -277,7 +279,7 @@
                 }
             }
 
-            // 繪製浮動文字
+            // 繪製打擊浮動文字
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
                 let ft = floatingTexts[i];
                 ctx.save();
@@ -302,7 +304,7 @@
             ctx.ellipse(x, y, s * 0.45, s * 0.35, -Math.PI / 8, 0, 2 * Math.PI);
             ctx.fill();
 
-            // 下加線 (C4)
+            // C4 (中央 C) 加加線
             if (name === "C4") {
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -325,6 +327,13 @@
         function startLevel() {
             timeLeft = 60 - (level - 1) * 20; 
             charElem.innerText = levelChars[level - 1];
+            
+            // Level 3 隱藏琴鍵字母，進一步考驗鍵盤位置記憶
+            const keys = document.querySelectorAll('.key:not(.black)');
+            keys.forEach(k => {
+                k.style.color = (level === 3) ? "transparent" : "#555";
+            });
+
             updateUI();
             resize();
             createNote();
@@ -381,13 +390,17 @@
 
             playNoteSound(selectedNote);
 
+            // 依音高進行判定，非依位置
             if (selectedNote === fallingNote.name) {
                 combo++;
                 const comboBonus = Math.floor(combo / 5) * 2;
                 const pointsGained = 10 + comboBonus;
                 score += pointsGained;
 
-                charElem.style.left = (fallingNote.x - 30) + "px";
+                // 角色跳躍移至按鍵處
+                const noteIndex = notePool.indexOf(selectedNote);
+                const targetKeyX = 60 + (noteIndex * ((viewWidth - 120) / (notePool.length - 1)));
+                charElem.style.left = (targetKeyX - 30) + "px";
                 charElem.classList.add('bounce');
                 setTimeout(() => charElem.classList.remove('bounce'), 150);
 
@@ -399,7 +412,7 @@
             } else {
                 combo = 0;
                 score = Math.max(0, score - 5);
-                addFloatingText("-5", fallingNote.x, fallingNote.currentY, '#FF4D4D');
+                addFloatingText("-5 錯音!", fallingNote.x, fallingNote.currentY, '#FF4D4D');
                 updateUI();
             }
         }
