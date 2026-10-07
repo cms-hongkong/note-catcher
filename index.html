@@ -8,59 +8,73 @@
         :root {
             --mint: #B2F2BB; --pink: #FFD6E0; --blue: #A2D2FF; --yellow: #FEF9E7; --text: #5B5B5B;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body {
             font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
             background: linear-gradient(180deg, #E3F2FD 0%, #F3E5F5 100%);
             margin: 0; padding: 0; height: 100vh; height: 100dvh; width: 100vw;
             overflow: hidden; display: flex; justify-content: center; align-items: center;
+            touch-action: none;
         }
         #app-wrapper {
             width: 96%; height: 98%; max-width: 800px;
             display: flex; flex-direction: column;
-            background: rgba(255, 255, 255, 0.4); border-radius: 25px;
+            background: rgba(255, 255, 255, 0.5); border-radius: 25px;
             overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 4px solid white;
         }
         .header {
             flex: 0 0 60px; background: white;
-            display: flex; justify-content: space-around; align-items: center; padding: 5px; z-index: 100;
+            display: flex; justify-content: space-around; align-items: center; padding: 5px 10px; z-index: 100;
         }
         .stat-box {
             background: var(--yellow); padding: 4px 10px; border-radius: 12px; border: 1.5px solid #FAD7A0;
             text-align: center; min-width: 60px;
         }
-        .stat-label { font-size: 0.5rem; color: #888; display: block; }
-        .stat-val { font-size: 0.9rem; color: #FF85A1; display: block; font-weight: bold; }
+        .stat-label { font-size: 0.55rem; color: #888; display: block; font-weight: bold; }
+        .stat-val { font-size: 0.95rem; color: #FF85A1; display: block; font-weight: bold; }
 
         #game-area { flex: 1; position: relative; width: 100%; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
         #character {
-            position: absolute; bottom: 5px; width: 60px; height: 60px; font-size: 50px;
-            display: flex; justify-content: center; align-items: center; transition: left 0.2s ease-out; z-index: 50;
+            position: absolute; bottom: 10px; width: 60px; height: 60px; font-size: 45px;
+            display: flex; justify-content: center; align-items: center;
+            transition: left 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.1s ease;
+            z-index: 50; transform-origin: center bottom; pointer-events: none;
         }
+        #character.bounce { transform: scale(1.25) translateY(-8px); }
+
         #keyboard {
-            flex: 0 0 160px; display: flex; background: #222; padding: 0 4px 8px 4px; z-index: 90;
+            flex: 0 0 150px; display: flex; background: #222; padding: 0 6px 8px 6px; z-index: 90;
+            position: relative; border-top: 4px solid #111;
         }
         .key {
-            flex: 1; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px;
+            flex: 1; background: white; border: 1px solid #ccc; border-radius: 0 0 8px 8px;
             position: relative; display: flex; justify-content: center; align-items: flex-end;
-            padding-bottom: 12px; font-weight: bold; font-size: 0.8rem; color: #ccc; cursor: pointer;
+            padding-bottom: 12px; font-weight: bold; font-size: 0.9rem; color: #555; cursor: pointer;
+            box-shadow: inset 0 -5px 0 #e0e0e0; transition: background 0.1s, transform 0.05s;
         }
-        .key.active { background: var(--mint); transform: translateY(2px); }
-        .key.black { background: #333; flex: 0.6; height: 60%; margin-left: -3%; margin-right: -3%; z-index: 95; border-radius: 0 0 4px 4px; }
+        .key.active { background: var(--mint); transform: translateY(3px); box-shadow: inset 0 -2px 0 #8ce99a; }
+        .key.black {
+            background: #333; flex: 0.6; height: 58%; margin-left: -3.5%; margin-right: -3.5%;
+            z-index: 95; border-radius: 0 0 5px 5px; box-shadow: inset 0 -4px 0 #111;
+            pointer-events: none;
+        }
         
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.98); z-index: 1000;
+            background: rgba(255, 255, 255, 0.95); z-index: 1000;
             display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;
+            backdrop-filter: blur(5px);
         }
         .btn-fancy {
-            background: #FF85A1; color: white; padding: 12px 40px; border-radius: 50px; font-size: 1.2rem; border: none; box-shadow: 0 4px 0 #D6336C; cursor: pointer; font-weight: bold;
+            background: #FF85A1; color: white; padding: 12px 40px; border-radius: 50px; font-size: 1.2rem;
+            border: none; box-shadow: 0 4px 0 #D6336C; cursor: pointer; font-weight: bold; transition: transform 0.1s;
         }
+        .btn-fancy:active { transform: translateY(3px); box-shadow: 0 1px 0 #D6336C; }
         #leaderboard {
-            width: 85%; max-width: 300px; background: var(--yellow); border-radius: 15px; padding: 10px; margin-top: 20px; border: 2px solid #FAD7A0;
+            width: 85%; max-width: 320px; background: var(--yellow); border-radius: 15px; padding: 12px; margin-top: 20px; border: 2px solid #FAD7A0;
         }
-        .lb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; border-bottom: 1px dashed #FAD7A0; }
+        .lb-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 5px 0; border-bottom: 1px dashed #FAD7A0; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -68,19 +82,20 @@
 
     <div id="app-wrapper">
         <div id="start-screen" class="overlay">
-            <h1 style="color: #FF85A1; margin: 0; font-size: 2.5rem;">Note Catcher</h1>
-            <input type="text" id="playerNameInput" style="padding:10px; border-radius:10px; border:2px solid var(--pink); margin:15px; width: 70%; text-align: center;" placeholder="輸入大名" maxlength="10">
+            <h1 style="color: #FF85A1; margin: 0; font-size: 2.5rem; text-shadow: 2px 2px 0 #FFD6E0;">Note Catcher</h1>
+            <p style="color: #666; font-size: 0.95rem; margin: 8px 0 15px 0;">聽音辨譜極限挑戰 🎵</p>
+            <input type="text" id="playerNameInput" style="padding:10px; border-radius:12px; border:2px solid var(--pink); margin-bottom:15px; width: 75%; text-align: center; font-size: 1rem; outline: none;" placeholder="輸入大名" maxlength="10">
             <button class="btn-fancy" onclick="startGame()">開始挑戰 🎶</button>
             <div id="leaderboard">
-                <div style="font-weight: bold; color: #FF85A1; margin-bottom: 5px;">🏆 最高分榜</div>
+                <div style="font-weight: bold; color: #FF85A1; margin-bottom: 8px;">🏆 最高分榜</div>
                 <div id="lb-content">正在加載...</div>
             </div>
         </div>
 
         <div id="msg-screen" class="overlay hidden">
-            <h1 id="msg-title">Level Up!</h1>
-            <p id="msg-body" style="font-size: 1.2rem; margin: 10px 0;"></p>
-            <button class="btn-fancy" onclick="nextAction()">繼續</button>
+            <h1 id="msg-title" style="color: #FF85A1; margin: 0;">Level Up!</h1>
+            <p id="msg-body" style="font-size: 1.2rem; margin: 15px 0; color: #555;"></p>
+            <button id="msg-btn" class="btn-fancy" onclick="nextAction()">繼續</button>
         </div>
 
         <div class="header">
@@ -88,6 +103,7 @@
             <div class="stat-box"><span class="stat-label">LEVEL</span><span id="level-val" class="stat-val">1</span></div>
             <div class="stat-box"><span class="stat-label">TIME</span><span id="timer-val" class="stat-val">60</span></div>
             <div class="stat-box"><span class="stat-label">SCORE</span><span id="score-val" class="stat-val">0</span></div>
+            <div class="stat-box"><span class="stat-label">COMBO</span><span id="combo-val" class="stat-val">0</span></div>
         </div>
 
         <div id="game-area">
@@ -111,24 +127,63 @@
         const canvas = document.getElementById('staffCanvas');
         const ctx = canvas.getContext('2d');
         const charElem = document.getElementById('character');
-        
-        let score = 0, level = 1, timeLeft = 60, gameActive = false;
+        const gameArea = document.getElementById('game-area');
+
+        let score = 0, level = 1, timeLeft = 60, combo = 0, gameActive = false;
         let timerId, animationId, fallingNote = null, playerName = "";
+        let viewWidth = 0, viewHeight = 0, dpr = 1;
 
         const levelChars = ["🐥", "🐱", "🦄"];
-        const s = 26; 
+        const s = 24; 
         const noteMap = { "C4": -6, "D4": -5, "E4": -4, "F4": -3, "G4": -2, "A4": -1, "B4": 0, "C5": 1 };
         const notePool = Object.keys(noteMap);
+
+        // 音頻合成 (Web Audio API)
+        const noteFreqs = {
+            "C4": 261.63, "D4": 293.66, "E4": 329.63, "F4": 349.23,
+            "G4": 392.00, "A4": 440.00, "B4": 493.88, "C5": 523.25
+        };
+        let audioCtx = null;
+
+        function playNoteSound(noteName) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const freq = noteFreqs[noteName];
+            if (!freq) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // 浮動打擊特效
+        let floatingTexts = [];
+        function addFloatingText(text, x, y, color) {
+            floatingTexts.push({ text, x, y, color, alpha: 1, life: 30 });
+        }
 
         function updateLB() {
             const records = JSON.parse(localStorage.getItem('noteCatcher_LB') || "[]");
             const content = document.getElementById('lb-content');
             if (records.length === 0) {
-                content.innerHTML = "<div style='color:#ccc; font-size:0.8rem;'>未有紀錄</div>";
+                content.innerHTML = "<div style='color:#ccc; font-size:0.85rem;'>未有紀錄</div>";
                 return;
             }
             content.innerHTML = records.slice(0, 5).map((r, i) => `
-                <div class="lb-row"><span>${i+1}. ${r.name}</span><span>${r.score}</span></div>
+                <div class="lb-row"><span>${i+1}. ${r.name}</span><span>${r.score} 分</span></div>
             `).join('');
         }
 
@@ -141,97 +196,231 @@
         }
 
         function resize() {
-            canvas.width = document.getElementById('game-area').offsetWidth;
-            canvas.height = document.getElementById('game-area').offsetHeight;
+            dpr = window.devicePixelRatio || 1;
+            viewWidth = gameArea.offsetWidth;
+            viewHeight = gameArea.offsetHeight;
+
+            canvas.width = viewWidth * dpr;
+            canvas.height = viewHeight * dpr;
+            ctx.resetTransform();
+            ctx.scale(dpr, dpr);
         }
         window.addEventListener('resize', resize);
 
         function drawStaff() {
-            const centerY = canvas.height * 0.24; 
-            ctx.strokeStyle = "#5B5B5B"; ctx.lineWidth = 1.5;
+            const centerY = viewHeight * 0.24; 
+            ctx.strokeStyle = "#5B5B5B"; 
+            ctx.lineWidth = 1.5;
+
+            // 五線譜 5 條線
             for (let i = -2; i <= 2; i++) {
-                let y = centerY + (i * s); ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(canvas.width - 20, y); ctx.stroke();
+                let y = centerY + (i * s);
+                ctx.beginPath();
+                ctx.moveTo(20, y);
+                ctx.lineTo(viewWidth - 20, y);
+                ctx.stroke();
             }
-            // 高音譜號：由 -18px 改為 -16px (相對移低 2px)
-            ctx.save(); ctx.fillStyle = "#333"; ctx.font = `${s * 9}px Arial`; ctx.textBaseline = "middle";
-            ctx.fillText("𝄞", 25, centerY + (s * 0.2) - 16); ctx.restore();
+
+            // 高音譜號
+            ctx.save();
+            ctx.fillStyle = "#333";
+            ctx.font = `${s * 8.5}px Arial`;
+            ctx.textBaseline = "middle";
+            ctx.fillText("𝄞", 25, centerY + (s * 0.2) - 14);
+            ctx.restore();
         }
 
         function createNote() {
-            let name; do { name = notePool[Math.floor(Math.random() * notePool.length)]; } while (fallingNote && name === fallingNote.name);
-            const centerY = canvas.height * 0.24;
-            const steps = noteMap[name]; const staffY = centerY - (steps * (s / 2));
+            let name;
+            do {
+                name = notePool[Math.floor(Math.random() * notePool.length)];
+            } while (fallingNote && name === fallingNote.name && notePool.length > 1);
+
+            const centerY = viewHeight * 0.24;
+            const steps = noteMap[name];
+            const staffY = centerY - (steps * (s / 2));
             const index = notePool.indexOf(name);
-            const startX = 100 + (index * ((canvas.width - 200) / (notePool.length - 1)));
-            fallingNote = { name, x: startX, staffY, currentY: staffY, speed: 0.9 + (level * 1.1), status: 'falling' };
+            const startX = 100 + (index * ((viewWidth - 200) / (notePool.length - 1)));
+            
+            const baseSpeed = 1.2 + (level * 1.0);
+            fallingNote = { name, x: startX, staffY, currentY: staffY, speed: baseSpeed, status: 'falling' };
         }
 
         function update() {
-            if (!gameActive) return; ctx.clearRect(0, 0, canvas.width, canvas.height); drawStaff();
+            if (!gameActive) return;
+
+            ctx.clearRect(0, 0, viewWidth, viewHeight);
+            drawStaff();
+
             if (fallingNote) {
-                ctx.save(); ctx.globalAlpha = 0.2; drawNoteHead(fallingNote.x, fallingNote.staffY, fallingNote.name); ctx.restore();
-                if (fallingNote.status === 'falling') fallingNote.currentY += fallingNote.speed;
+                // 目標陰影音符
+                ctx.save();
+                ctx.globalAlpha = 0.25;
+                drawNoteHead(fallingNote.x, fallingNote.staffY, fallingNote.name);
+                ctx.restore();
+
+                if (fallingNote.status === 'falling') {
+                    fallingNote.currentY += fallingNote.speed;
+                }
+
                 const color = fallingNote.status === 'hit' ? '#4CAF50' : '#333';
-                ctx.fillStyle = ctx.strokeStyle = color; drawNoteHead(fallingNote.x, fallingNote.currentY, fallingNote.name);
-                if (fallingNote.currentY > canvas.height + 30) createNote();
+                ctx.fillStyle = ctx.strokeStyle = color;
+                drawNoteHead(fallingNote.x, fallingNote.currentY, fallingNote.name);
+
+                // 漏接判定
+                if (fallingNote.currentY > viewHeight - 20 && fallingNote.status === 'falling') {
+                    combo = 0;
+                    score = Math.max(0, score - 5);
+                    addFloatingText("-5 Miss", fallingNote.x, viewHeight - 60, "#FF4D4D");
+                    updateUI();
+                    createNote();
+                }
             }
+
+            // 繪製浮動文字
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = ft.color;
+                ctx.font = "bold 18px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+
+                ft.y -= 1.2;
+                ft.life--;
+                ft.alpha = ft.life / 30;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
             animationId = requestAnimationFrame(update);
         }
 
         function drawNoteHead(x, y, name) {
-            ctx.beginPath(); ctx.ellipse(x, y, s * 0.45, s * 0.35, -Math.PI / 8, 0, 2 * Math.PI); ctx.fill();
-            if (name === "C4") { ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 20, y); ctx.lineTo(x + 20, y); ctx.stroke(); }
+            ctx.beginPath();
+            ctx.ellipse(x, y, s * 0.45, s * 0.35, -Math.PI / 8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 下加線 (C4)
+            if (name === "C4") {
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x - 18, y);
+                ctx.lineTo(x + 18, y);
+                ctx.stroke();
+            }
         }
 
         function startGame() {
             playerName = document.getElementById('playerNameInput').value.trim() || "樂手";
             document.getElementById('name-val').innerText = playerName;
             document.getElementById('start-screen').classList.add('hidden');
-            score = 0; level = 1; startLevel();
+            score = 0;
+            level = 1;
+            combo = 0;
+            startLevel();
         }
 
         function startLevel() {
-            // 每關減少 20 秒 (L1: 60, L2: 40, L3: 20)
             timeLeft = 60 - (level - 1) * 20; 
             charElem.innerText = levelChars[level - 1];
-            updateUI(); resize(); createNote(); gameActive = true;
+            updateUI();
+            resize();
+            createNote();
+            gameActive = true;
+
             if (timerId) clearInterval(timerId);
-            timerId = setInterval(() => { timeLeft--; document.getElementById('timer-val').innerText = timeLeft; if (timeLeft <= 0) endLevel(); }, 1000);
-            cancelAnimationFrame(animationId); update();
+            timerId = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-val').innerText = timeLeft;
+                if (timeLeft <= 0) endLevel();
+            }, 1000);
+
+            cancelAnimationFrame(animationId);
+            update();
         }
 
         function endLevel() {
-            gameActive = false; clearInterval(timerId);
+            gameActive = false;
+            clearInterval(timerId);
             document.getElementById('msg-screen').classList.remove('hidden');
-            document.getElementById('msg-body').innerText = `得分: ${score}`;
+            document.getElementById('msg-body').innerText = `目前得分: ${score}`;
+
+            const msgTitle = document.getElementById('msg-title');
+            const msgBtn = document.getElementById('msg-btn');
+
             if (level >= 3) {
                 saveFinalScore();
-                document.getElementById('msg-title').innerText = "🏆 最終得分";
-                document.getElementById('msg-btn').innerText = "返回主頁";
+                msgTitle.innerText = "🏆 挑戰成功！";
+                msgBtn.innerText = "返回主頁";
             } else {
-                document.getElementById('msg-title').innerText = `Level ${level} 完成!`;
-                document.getElementById('msg-btn').innerText = "挑戰下一關";
+                msgTitle.innerText = `Level ${level} 完成!`;
+                msgBtn.innerText = "挑戰下一關";
             }
         }
 
         function nextAction() {
             document.getElementById('msg-screen').classList.add('hidden');
-            if (level < 3) { level++; startLevel(); } else { location.reload(); }
+            if (level < 3) {
+                level++;
+                startLevel();
+            } else {
+                location.reload();
+            }
         }
 
-        function updateUI() { document.getElementById('score-val').innerText = score; document.getElementById('level-val').innerText = level; }
+        function updateUI() {
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('level-val').innerText = level;
+            document.getElementById('combo-val').innerText = combo;
+        }
+
+        function handleKeyPress(selectedNote) {
+            if (!gameActive || !fallingNote) return;
+
+            playNoteSound(selectedNote);
+
+            if (selectedNote === fallingNote.name) {
+                combo++;
+                const comboBonus = Math.floor(combo / 5) * 2;
+                const pointsGained = 10 + comboBonus;
+                score += pointsGained;
+
+                charElem.style.left = (fallingNote.x - 30) + "px";
+                charElem.classList.add('bounce');
+                setTimeout(() => charElem.classList.remove('bounce'), 150);
+
+                fallingNote.status = 'hit';
+                addFloatingText(`+${pointsGained}${combo > 2 ? ' 🔥' + combo + 'Combo!' : ''}`, fallingNote.x, fallingNote.currentY, '#4CAF50');
+
+                updateUI();
+                setTimeout(createNote, 120);
+            } else {
+                combo = 0;
+                score = Math.max(0, score - 5);
+                addFloatingText("-5", fallingNote.x, fallingNote.currentY, '#FF4D4D');
+                updateUI();
+            }
+        }
 
         document.getElementById('keyboard').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
             const key = e.target.closest('.key');
-            if (!key || !gameActive || !fallingNote) return;
+            if (!key || key.classList.contains('black')) return;
+
             const selected = key.dataset.note;
-            if (selected === fallingNote.name) {
-                score += 10; charElem.style.left = (fallingNote.x - 30) + "px"; fallingNote.status = 'hit';
-                updateUI(); setTimeout(createNote, 100);
-            } else { score = Math.max(0, score - 5); updateUI(); }
-            key.classList.add('active'); setTimeout(() => key.classList.remove('active'), 150);
+            if (selected) {
+                handleKeyPress(selected);
+                key.classList.add('active');
+                setTimeout(() => key.classList.remove('active'), 150);
+            }
         });
-        window.onload = () => { resize(); updateLB(); };
+
+        window.onload = () => {
+            resize();
+            updateLB();
+        };
     </script>
 </body>
 </html>
