@@ -82,8 +82,7 @@
 
     <div id="app-wrapper">
         <div id="start-screen" class="overlay">
-            <h1 style="color: #FF85A1; margin: 0; font-size: 2.5rem; text-shadow: 2px 2px 0 #FFD6E0;">Note Catcher</h1>
-            <p style="color: #666; font-size: 0.95rem; margin: 8px 0 15px 0;">看五線譜認音高 🎶（大字版琴鍵 & 放大五線譜）</p>
+            <h1 style="color: #FF85A1; margin: 0 0 20px 0; font-size: 2.5rem; text-shadow: 2px 2px 0 #FFD6E0;">Note Catcher</h1>
             <input type="text" id="playerNameInput" style="padding:10px; border-radius:12px; border:2px solid var(--pink); margin-bottom:15px; width: 75%; text-align: center; font-size: 1rem; outline: none;" placeholder="輸入大名" maxlength="10">
             <button class="btn-fancy" onclick="startGame()">開始挑戰 🎶</button>
             <div id="leaderboard">
@@ -134,7 +133,6 @@
         let viewWidth = 0, viewHeight = 0, dpr = 1;
 
         const levelChars = ["🐥", "🐱", "🦄"];
-        // 放大五線譜線距至 36px (音符尺寸會自動相應放大)
         const s = 36; 
         const noteMap = { "C4": -6, "D4": -5, "E4": -4, "F4": -3, "G4": -2, "A4": -1, "B4": 0, "C5": 1 };
         const notePool = Object.keys(noteMap);
@@ -211,7 +209,6 @@
             ctx.strokeStyle = "#5B5B5B"; 
             ctx.lineWidth = 2;
 
-            // 畫加大的五線譜線條
             for (let i = -2; i <= 2; i++) {
                 let y = centerY + (i * s);
                 ctx.beginPath();
@@ -220,7 +217,6 @@
                 ctx.stroke();
             }
 
-            // 高音譜號相應放縮
             ctx.save();
             ctx.fillStyle = "#333";
             ctx.font = `${s * 6.8}px Arial`;
@@ -239,10 +235,8 @@
             const steps = noteMap[name];
             const staffY = centerY - (steps * (s / 2));
             
-            // X 軸隨機落點 (25% ~ 75%)
-            const minX = viewWidth * 0.25;
-            const maxX = viewWidth * 0.75;
-            const startX = Math.floor(Math.random() * (maxX - minX)) + minX;
+            // 直接置中掉落
+            const startX = viewWidth / 2;
 
             const baseSpeed = 1.0 + (level * 0.8);
             fallingNote = { name, x: startX, staffY, currentY: staffY, speed: baseSpeed, status: 'falling' };
@@ -302,11 +296,9 @@
 
         function drawNoteHead(x, y, name) {
             ctx.beginPath();
-            // 放大音符頭部，精確匹配 36px 線距
             ctx.ellipse(x, y, s * 0.48, s * 0.38, -Math.PI / 8, 0, 2 * Math.PI);
             ctx.fill();
 
-            // 加大的 C4 中央 C 加線
             if (name === "C4") {
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
